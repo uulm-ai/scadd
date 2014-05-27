@@ -52,6 +52,13 @@ Finally, DDs offer a `transform` method that recursively transforms a diagram bo
         def innerNodeTransformation(variable: Variable[V], map: Map[V, String]): String = "(" + variable + map.foldLeft("")((intermediate, tuple) => intermediate + "\n(" + tuple._1 + " " + tuple._2 + ")").replace("\n", "\n\t") + ")"
         transform("(" + _ + ")", innerNodeTransformation)
     }
+    
+So that `println(summed.toString)` gives
+
+    (blubb
+    	(a (2.0))
+    	(b (1.0))
+    	(c (1.0)))
 
 
 Contexts
