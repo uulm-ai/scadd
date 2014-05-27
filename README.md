@@ -51,5 +51,5 @@ Once an implicit context is defined, `DecisionDiagram(1d)` implicitly uses `cont
     
 Scadd offers two separate implementations for DDs and their contexts. The above example uses `de.uniulm.dds.leanimpl._`, the alternative is `de.uniulm.dds.defaultimpl._`. Both offer the same functionality, but `leanimpl` uses less memory.
 
-Variable ordering is given by variable comparator `variableOrder: Comparator[Variable[V]]` that must be consistent with equals. Predefined orderings are `listbasedOrdering` and `lexicographicOrdering` defined in the `de.uniulm.dds.base` package object.
+Variable ordering is given by a variable comparator `variableOrder: Comparator[Variable[V]]` that must be consistent with equals. Predefined orderings are `listbasedOrdering` and `lexicographicOrdering` defined in the `de.uniulm.dds.base` package object.
 
