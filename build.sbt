@@ -20,7 +20,3 @@ libraryDependencies += "de.uni-ulm" %% "scala_util" % "1.3"
 libraryDependencies += "org.scalatest" %% "scalatest" % "2.1.7" % "test"
 
 jacoco.settings
-
-publishMavenStyle := true
-
-publishTo := Some(Resolver.ssh("fmueller releases", "companion.informatik.uni-ulm.de", "/media/SFB-Space/SambaLDAP/HOMES/fmueller/public_html/mvn") withPermissions "0644")
