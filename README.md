@@ -46,7 +46,7 @@ DDs also offer a `restrict` operation that returns the diagram that results from
 
     println(summed.restrict(Map(variable -> "a")) eq DecisionDiagram(2d)) // prints true
     
-Finally, DDs offer a `transform` method recursively transforms a diagram bottom up: `def transform[K](leafTransformation: T => K, innerNodeTransformation: (Variable[V], Map[V, K]) => K): K`. E.g., `DecisionDiagram.toString` is implemented as a transformation:
+Finally, DDs offer a `transform` method that recursively transforms a diagram bottom up: `def transform[K](leafTransformation: T => K, innerNodeTransformation: (Variable[V], Map[V, K]) => K): K`. E.g., `DecisionDiagram.toString` is implemented as a transformation:
 
     override def toString(): String = {
         def innerNodeTransformation(variable: Variable[V], map: Map[V, String]): String = "(" + variable + map.foldLeft("")((intermediate, tuple) => intermediate + "\n(" + tuple._1 + " " + tuple._2 + ")").replace("\n", "\n\t") + ")"
