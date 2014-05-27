@@ -20,7 +20,8 @@ Here is an example for creating a variable, creating an ADD, and performing a fe
     val summed: DecisionDiagram[String, Double] = constantOne + oneForA
     println(summed(Map(variable -> "a"))) // prints 2.0
     println(summed eq DecisionDiagram(1d) / (DecisionDiagram(1d) / summed)) // prints true
-
+    println(summed.restrict(Map(variable -> "a")) eq DecisionDiagram(2d)) // prints true
+    
 Ignoring the `context` for the moment, variables and DDs are created and used as follows:
     
 Variables
@@ -40,6 +41,18 @@ Diagrams are created and combined as follows:
 Since DDs represent function, they can be evaluated just like other functions in Scala by supplying an assignment of their variables to values:
 
     println(summed(Map(variable -> "a"))) // prints 2.0
+    
+DDs also offer a `restrict` operation that returns the diagram that results from assigning a certain value to some variables, akin to currying:
+
+    println(summed.restrict(Map(variable -> "a")) eq DecisionDiagram(2d)) // prints true
+    
+Finally, DDs offer a `transform` method recursively transforms a diagram bottom up: `def transform[K](leafTransformation: T => K, innerNodeTransformation: (Variable[V], Map[V, K]) => K): K`. E.g., `DecisionDiagram.toString` is implemented as a transformation:
+
+    override def toString(): String = {
+        def innerNodeTransformation(variable: Variable[V], map: Map[V, String]): String = "(" + variable + map.foldLeft("")((intermediate, tuple) => intermediate + "\n(" + tuple._1 + " " + tuple._2 + ")").replace("\n", "\n\t") + ")"
+        transform("(" + _ + ")", innerNodeTransformation)
+    }
+
 
 Contexts
 --------
@@ -52,4 +65,16 @@ Once an implicit context is defined, `DecisionDiagram(1d)` implicitly uses `cont
 Scadd offers two separate implementations for DDs and their contexts. The above example uses `de.uniulm.dds.leanimpl._`, the alternative is `de.uniulm.dds.defaultimpl._`. Both offer the same functionality, but `leanimpl` uses less memory.
 
 Variable ordering is given by a variable comparator `variableOrder: Comparator[Variable[V]]` that must be consistent with equals. Predefined orderings are `listbasedOrdering` and `lexicographicOrdering` defined in the `de.uniulm.dds.base` package object.
+
+Caching
+-------
+Scadd uses [guava](https://code.google.com/p/guava-libraries/) for caching intermediate results of applying unary and binary operations and restricting. Cache sizes can be configured upon `Context` creation. Default values are supplied, these are very generous, however.
+
+Adding Scadd to your sbt project
+--------------------------------
+To use the library, add the following lines to your `.sbt` file:
+
+    resolvers += "fmueller repository" at "http://companion.informatik.uni-ulm.de/~fmueller/mvn"
+    
+    libraryDependencies += "de.uni-ulm" % "scadd_2.11" % "1.10"
 
