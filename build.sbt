@@ -5,7 +5,7 @@ name := "scadd"
 
 organization := "de.uni-ulm"
 
-version := "1.9"
+version := "1.10"
 
 scalaVersion := "2.11.0"
 
