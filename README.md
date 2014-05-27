@@ -70,7 +70,7 @@ Caching
 -------
 Scadd uses [guava](https://code.google.com/p/guava-libraries/) for caching intermediate results of applying unary and binary operations and restricting. Cache sizes can be configured upon `Context` creation. Default values are supplied, these are very generous, however.
 
-Adding Scadd to your sbt project
+Adding scadd to your sbt project
 --------------------------------
 To use the library, add the following lines to your `.sbt` file:
 
