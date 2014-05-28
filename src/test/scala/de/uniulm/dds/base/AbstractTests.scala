@@ -37,13 +37,22 @@ trait AbstractTests extends FunSuite {
     assertResult(diagram)(converted.convertToContext(context1))
   }
 
-  test("Inversion, Difference") {
+  test("Inversion, Difference, Negation") {
     implicit val context: Context[String, Double] = createContext(lexicographicOrdering)
     import ExtraADDImplicits._
     val variable: Variable[String] = Variable("blubb", Set("a", "b", "c"))
     val onePlusIndicator: DecisionDiagram[String, Double] = DecisionDiagram(1d) + variable.indicator("a")
     assertResult(onePlusIndicator)(DecisionDiagram(1d) / (DecisionDiagram(1d) / onePlusIndicator))
     assertResult(DecisionDiagram(0d))(onePlusIndicator - onePlusIndicator)
+    assertResult(onePlusIndicator)(-(-onePlusIndicator))
+  }
+
+  test("Sum out") {
+    implicit val context: Context[String, Double] = createContext(lexicographicOrdering)
+    import ExtraADDImplicits._
+    val variable: Variable[String] = Variable("blubb", Set("a", "b", "c"))
+    val onePlusIndicator: DecisionDiagram[String, Double] = DecisionDiagram(1d) + variable.indicator("a")
+    assertResult(DecisionDiagram(4d))(onePlusIndicator.opOut(variable, _ + _))
   }
 
   test("Indicators disjoin to true") {
@@ -141,6 +150,7 @@ trait AbstractTests extends FunSuite {
     assertResult("(a\n" + "\t(true (b\n" + "\t\t(true (0))\n" + "\t\t(false (1))))\n" + "\t(false (b\n" + "\t\t(true (1))\n" + "\t\t(false (0)))))")(result.toString())
     assertResult(4)((result * Variable("c", Set("true", "false")).indicator("true")).size)
     assertResult(3)(result.size)
+    assertResult(0)(DecisionDiagram(5).size)
   }
 
   test("Compute occurring variables") {

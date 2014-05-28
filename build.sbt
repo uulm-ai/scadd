@@ -1,6 +1,3 @@
-import de.johoop.jacoco4sbt._
-import JacocoPlugin._
-
 name := "scadd"
 
 organization := "de.uni-ulm"
@@ -14,5 +11,3 @@ resolvers += "fmueller" at "http://companion.informatik.uni-ulm.de/~fmueller/mvn
 libraryDependencies += "de.uni-ulm" %% "identity_interners" % "1.0"
 
 libraryDependencies += "org.scalatest" %% "scalatest" % "2.1.7" % "test"
-
-jacoco.settings

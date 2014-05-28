@@ -65,7 +65,7 @@ trait DecisionDiagram[V, T] extends (Map[Variable[V], V] => T) {
    * @param operation the combination operation
    * @return the resulting diagram
    */
-  def opOut(variable: Variable[V], operation: (T, T) => T) = variable.domain.map(value => restrict(Map(variable -> value))).reduceLeft(_.applyBinaryOperation(operation, _))
+  def opOut(variable: Variable[V], operation: (T, T) => T) = variable.domain.toSeq.map(value => restrict(Map(variable -> value)))(collection.breakOut).reduceLeft(_.applyBinaryOperation(operation, _))
 
   override def toString(): String = {
     def innerNodeTransformation(variable: Variable[V], map: Map[V, String]): String = "(" + variable + map.foldLeft("")((intermediate, tuple) => intermediate + "\n(" + tuple._1 + " " + tuple._2 + ")").replace("\n", "\n\t") + ")"
