@@ -7,6 +7,18 @@ Decision Diagrams
 -----------------
 Decision Diagrams (DDs) represent functions from n Boolean or finite-domain variables to arbitrary values as directed acyclic graphs. Special cases are [Binary Decision Diagrams (BDDs)](http://en.wikipedia.org/wiki/Binary_decision_diagram) for Boolean-valued functions and Algebraic Decision Diagrams (ADDs) for number-valued functions. DDs are often compact, offer a unique representation for a given function, and support efficient application of binary operations for combining DDs, such as conjunction for BDDs or multiplication for ADDs.
 
+Why Scadd?
+----------
+The design ideas behind scadd are
+* to have an easy to use and read DD library that
+* uses immutable data structures for representing DDs,
+* is thread-safe,
+* supports multiple variable orderings simultaneously,
+* supports finite-domain variables, and
+* supports both ADDs and BDDs.
+
+There exist many implementations for DDs, many of which are probably faster than scadd (see, again, [here](http://en.wikipedia.org/wiki/Binary_decision_diagram), for a list of other implementations).
+
 Scadd usage example
 -------------------
 Here is an example for creating a variable, creating an ADD, and performing a few operations. Some more explanation is given below.
@@ -14,13 +26,13 @@ Here is an example for creating a variable, creating an ADD, and performing a fe
     import de.uniulm.dds.base._
     import de.uniulm.dds.leanimpl._
     implicit val context: Context[String, Double] = createContext(lexicographicOrdering)
-    val variable = Variable("blubb", Set("a", "b", "c"))
+    val variable = Variable("w", Set("yes", "no", "maybe"))
     val constantOne = DecisionDiagram(1d)
-    val oneForA = DecisionDiagram(variable, Map("a" -> 1d, "b" -> 0d, "c" -> 0d))
+    val oneForA = DecisionDiagram(variable, Map("yes" -> 1d, "no" -> 0d, "maybe" -> 0d))
     val summed: DecisionDiagram[String, Double] = constantOne + oneForA
-    println(summed(Map(variable -> "a"))) // prints 2.0
+    println(summed(Map(variable -> "yes"))) // prints 2.0
     println(summed eq DecisionDiagram(1d) / (DecisionDiagram(1d) / summed)) // prints true
-    println(summed.restrict(Map(variable -> "a")) eq DecisionDiagram(2d)) // prints true
+    println(summed.restrict(Map(variable -> "yes")) eq DecisionDiagram(2d)) // prints true
     
 Ignoring the `context` for the moment, variables and DDs are created and used as follows:
     
@@ -40,11 +52,11 @@ Diagrams are created and combined as follows:
 
 Since DDs represent function, they can be evaluated just like other functions in Scala by supplying an assignment of their variables to values:
 
-    println(summed(Map(variable -> "a"))) // prints 2.0
+    println(summed(Map(variable -> "yes"))) // prints 2.0
     
 DDs also offer a `restrict` operation that returns the diagram that results from assigning a certain value to some variables, akin to currying:
 
-    println(summed.restrict(Map(variable -> "a")) eq DecisionDiagram(2d)) // prints true
+    println(summed.restrict(Map(variable -> "yes")) eq DecisionDiagram(2d)) // prints true
     
 Finally, DDs offer a `transform` method that recursively transforms a diagram bottom up: `def transform[K](leafTransformation: T => K, innerNodeTransformation: (Variable[V], Map[V, K]) => K): K`. E.g., `DecisionDiagram.toString` is implemented as a transformation:
 
@@ -55,10 +67,10 @@ Finally, DDs offer a `transform` method that recursively transforms a diagram bo
     
 So that `println(summed.toString)` gives
 
-    (blubb
-    	(a (2.0))
-    	(b (1.0))
-    	(c (1.0)))
+    (w
+    	(yes (2.0))
+    	(no (1.0))
+    	(maybe (1.0)))
 
 
 Contexts
