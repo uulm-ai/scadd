@@ -76,6 +76,7 @@ package object base {
 
       /**
        * Converts this function into a decision diagram
+       * @param relevantVariables the variables that need to be assigned for evaluating this function
        * @return a decision diagram representing this function
        */
       def toDecisionDiagram(relevantVariables: Set[Variable[V]]): DecisionDiagram[V, T] = {
@@ -127,6 +128,7 @@ package object base {
 
       /**
        * Converts this function into a decision diagram
+       * @param relevantVariables the variables that need to be assigned for evaluating this function
        * @return a decision diagram representing this function
        */
       def toDecisionDiagram(relevantVariables: Set[Variable[V]]): DecisionDiagram[V, Boolean] = {
