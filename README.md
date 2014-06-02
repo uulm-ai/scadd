@@ -95,5 +95,5 @@ To use the library, add the following lines to your `.sbt` file:
 
     resolvers += "fmueller repository" at "http://companion.informatik.uni-ulm.de/~fmueller/mvn"
     
-    libraryDependencies += "de.uni-ulm" % "scadd_2.11" % "1.10"
+    libraryDependencies += "de.uni-ulm" % "scadd_2.11" % "1.11"
 
