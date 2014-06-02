@@ -165,4 +165,36 @@ trait AbstractTests extends FunSuite {
     val result: DecisionDiagram[String, Int] = variable1TrueIndicator * variable2FalseIndicator + variable1FalseIndicator * variable2TrueIndicator
     assertResult(Set(variable1, variable2))(result.occurringVariables)
   }
+
+  test("Create numeric diagram from numeric function") {
+    implicit val context: Context[Boolean, Double] = createContext(lexicographicOrdering)
+    import ExtraADDImplicits._
+
+    val mutexAsFunction: (Map[Variable[Boolean], Boolean]) => Double = assignment => if (assignment.keys.count(assignment) <= 1) 1 else 0
+
+    def mutexAsDiagram(variables: Set[Variable[Boolean]]): DecisionDiagram[Boolean, Double] = {
+      val noneTrueBefore = variables.map(_.indicator(false)).reduce(_ * _)
+      val oneTrueBefores: Iterable[DecisionDiagram[Boolean, Double]] = for (trueVariable <- variables) yield variables.map(variable => variable.indicator(variable == trueVariable)).reduce(_ * _)
+      oneTrueBefores.foldLeft(noneTrueBefore)(_ + _)
+    }
+
+    val variables = Set(Variable("a"), Variable("b"), Variable("c"))
+    assertResult(mutexAsDiagram(variables))(mutexAsFunction.toDecisionDiagram(variables))
+  }
+
+  test("Create Boolean diagram from Boolean function") {
+    implicit val context: Context[Boolean, Boolean] = createContext(lexicographicOrdering)
+    import ExtraBDDImplicits._
+
+    val mutexAsFunction: (Map[Variable[Boolean], Boolean]) => Boolean = assignment => assignment.keys.count(assignment) <= 1
+
+    def mutexAsDiagram(variables: Set[Variable[Boolean]]): DecisionDiagram[Boolean, Boolean] = {
+      val noneTrueBefore = variables.map(_.indicator(false)).reduce(_ && _)
+      val oneTrueBefores: Iterable[DecisionDiagram[Boolean, Boolean]] = for (trueVariable <- variables) yield variables.map(variable => variable.indicator(variable == trueVariable)).reduce(_ && _)
+      oneTrueBefores.foldLeft(noneTrueBefore)(_ || _)
+    }
+
+    val variables = Set(Variable("a"), Variable("b"), Variable("c"))
+    assertResult(mutexAsDiagram(variables))(mutexAsFunction.toDecisionDiagram(variables))
+  }
 }

@@ -71,6 +71,24 @@ package object base {
         diagram.transform(leafTransformation, innerNodeTransformation)
       }
     }
+
+    implicit class RichFunction[V, T](function: Map[Variable[V], V] => T)(implicit context: Context[V, T], n: Numeric[T]) {
+
+      /**
+       * Converts this function into a decision diagram
+       * @return a decision diagram representing this function
+       */
+      def toDecisionDiagram(relevantVariables: Set[Variable[V]]): DecisionDiagram[V, T] = {
+        def build(partialAssignment: Map[Variable[V], V], remainingVariables: Set[Variable[V]]): DecisionDiagram[V, T] = {
+          if (remainingVariables.isEmpty) DecisionDiagram(function(partialAssignment))
+          else {
+            val nextVariable = remainingVariables.head
+            nextVariable.domain.foldLeft(DecisionDiagram(n.zero))((diagram, value) => diagram + nextVariable.indicator(value) * build(partialAssignment + (nextVariable -> value), remainingVariables.tail))
+          }
+        }
+        build(Map(), relevantVariables)
+      }
+    }
   }
 
   /**
@@ -101,6 +119,25 @@ package object base {
           (variable, map) => variable.domain.foldLeft(DecisionDiagram(false)(targetContext))((sum, next) => sum || map(next) && variable.indicator(next)(targetContext))
 
         diagram.transform(leafTransformation, innerNodeTransformation)
+      }
+    }
+
+
+    implicit class RichFunction[V](function: Map[Variable[V], V] => Boolean)(implicit context: Context[V, Boolean]) {
+
+      /**
+       * Converts this function into a decision diagram
+       * @return a decision diagram representing this function
+       */
+      def toDecisionDiagram(relevantVariables: Set[Variable[V]]): DecisionDiagram[V, Boolean] = {
+        def build(partialAssignment: Map[Variable[V], V], remainingVariables: Set[Variable[V]]): DecisionDiagram[V, Boolean] = {
+          if (remainingVariables.isEmpty) DecisionDiagram(function(partialAssignment))
+          else {
+            val nextVariable = remainingVariables.head
+            nextVariable.domain.foldLeft(DecisionDiagram(false))((diagram, value) => diagram || nextVariable.indicator(value) && build(partialAssignment + (nextVariable -> value), remainingVariables.tail))
+          }
+        }
+        build(Map(), relevantVariables)
       }
     }
   }
