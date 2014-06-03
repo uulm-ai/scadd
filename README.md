@@ -25,7 +25,7 @@ Here is an example for creating a variable, creating an ADD, and performing a fe
 
     import de.uniulm.dds.base._
     import de.uniulm.dds.leanimpl._
-    implicit val context: Context[String, Double] = createContext(lexicographicOrdering)
+    implicit val context: Context[String, Double] = Context(Parameters[String, Double](lexicographicOrdering))
     val variable = Variable("w", Set("yes", "no", "maybe"))
     val constantOne = DecisionDiagram(1d)
     val oneForA = DecisionDiagram(variable, Map("yes" -> 1d, "no" -> 0d, "maybe" -> 0d))
@@ -77,13 +77,13 @@ Contexts
 --------
 DDs are only unique for a given variable ordering. `Context[V, T]` maintains this ordering and takes care of ensuring diagram uniqueness. `Context[V, T]` offers methods for creating DDs. However, as seen above, these are usually not used directly and someting like `DecisionDiagram(1d)` is used instead. Calling `DecisionDiagram(1d)` requires an `implicit` context to be defined. Scadd is designed like this because it is often satisfactory to only work with a single context. It is therefore convenient to declare the context using an `implicit val` and then using `DecisionDiagram(1d)` and the like:
 
-    implicit val context: Context[String, Double] = createContext(lexicographicOrdering)
+    implicit val context: Context[String, Double] = Context(Parameters[String, Double](lexicographicOrdering))
     
 Once an implicit context is defined, `DecisionDiagram(1d)` implicitly uses `context` to create the diagram. In particular, this means that type parameters transfer to the created DDs, i.e. `DecisionDiagram(1d)` will be a `DecisionDiagram[String, Double]`.
     
 Scadd offers two separate implementations for DDs and their contexts. The above example uses `de.uniulm.dds.leanimpl._`, the alternative is `de.uniulm.dds.defaultimpl._`. Both offer the same functionality, but `leanimpl` uses less memory.
 
-Variable ordering is given by a variable comparator `variableOrder: Comparator[Variable[V]]` that must be consistent with equals. Predefined orderings are `listbasedOrdering` and `lexicographicOrdering` defined in the `de.uniulm.dds.base` package object.
+Variable ordering is given by a variable comparator `Comparator[Variable[V]]` that must be consistent with equals. Predefined orderings are `listbasedOrdering` and `lexicographicOrdering` defined in the `de.uniulm.dds.base` package object.
 
 Caching
 -------
@@ -95,5 +95,5 @@ To use the library, add the following lines to your `.sbt` file:
 
     resolvers += "fmueller repository" at "http://companion.informatik.uni-ulm.de/~fmueller/mvn"
     
-    libraryDependencies += "de.uni-ulm" % "scadd_2.11" % "1.11"
+    libraryDependencies += "de.uni-ulm" % "scadd_2.11" % "1.12"
 
