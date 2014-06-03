@@ -1,8 +1,6 @@
 package de.uniulm.dds.leanimpl
 
-import java.util.Comparator
-import de.uniulm.dds.base.{Context, Variable, AbstractTests}
-import de.uniulm.dds.leanimpl
+import de.uniulm.dds.base._
 
 /**
  * Tests for the lean implementation.
@@ -12,5 +10,5 @@ import de.uniulm.dds.leanimpl
  * Time: 17:12
  */
 class LeanImplTests extends AbstractTests {
-  def createContext[V, T](variableOrder: Comparator[Variable[V]]): Context[V, T] = leanimpl.createContext(variableOrder)
+  def createContext[V, T](): Context[V, T] = Context(Parameters[V, T](lexicographicOrdering))
 }

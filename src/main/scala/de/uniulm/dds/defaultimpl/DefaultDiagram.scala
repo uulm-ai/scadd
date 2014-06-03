@@ -62,7 +62,7 @@ private[defaultimpl] final class InnerNode[V, T](val variable: Variable[V], val 
         other match {
           case leaf: Leaf[V, T] => context.getDiagramUnsafe(variable, children.mapValues(_.applyBinaryOperationInternal(leafOperation, other)))
           case inner: InnerNode[V, T] =>
-            val comparisonResult: Int = context.variableOrder.compare(variable, inner.variable)
+            val comparisonResult: Int = context.parameters.variableOrder.compare(variable, inner.variable)
             if (comparisonResult < 0) {
               context.getDiagramUnsafe(variable, children.mapValues(_.applyBinaryOperationInternal(leafOperation, other)))
             }

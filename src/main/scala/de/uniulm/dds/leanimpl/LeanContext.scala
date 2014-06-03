@@ -6,7 +6,6 @@ import com.google.common.cache.LoadingCache
 import com.google.common.collect.IdentityInterners
 import com.google.common.collect.Interner
 import de.uniulm.dds.base._
-import java.util.Comparator
 
 /**
  * The context implementation.
@@ -14,16 +13,11 @@ import java.util.Comparator
  * User: Felix
  * Date: 23.04.13
  * Time: 15:21
- * @param variableOrder the comparator that specifies variable order. For variables <code>a</code> and <code>b</code>,
- *                      <code>a</code> will always come before <code>b</code> in a diagram of this context iff
- *                      <code>variableOrder.compare(a, b) < 0</code>. The comparator must be consistent with equals.
- * @param restrictCacheSize the size of the restrict cache
- * @param binaryOpCacheSize the size of the binary operation cache
- * @param unaryOpCacheSize the size of the unary operation cache
+ * @param parameters the configuration parameters
  * @tparam V The type of the elements of variable domains
  * @tparam T The type of leaf values of the diagrams
  */
-private[leanimpl] class LeanContext[V, T](val variableOrder: Comparator[Variable[V]], restrictCacheSize: Int, binaryOpCacheSize: Int, unaryOpCacheSize: Int) extends Context[V, T] {
+private[leanimpl] class LeanContext[V, T](parameters: Parameters[V, T]) extends Context[V, T] {
 
   private final val delegatingDiagramInterner: Interner[DelegatingDiagram[V, T]] = IdentityInterners.newWeakIdentityInterner()
   private final val leanDiagramInterner: Interner[LeanDiagram[V, T]] = IdentityInterners.newWeakIdentityInterner()
@@ -31,7 +25,7 @@ private[leanimpl] class LeanContext[V, T](val variableOrder: Comparator[Variable
     def load(key: Variable[V]): Map[V, Int] = key.domain.zipWithIndex[V, Map[V, Int]](collection.breakOut)
   })
 
-  private final val restrictCache: LoadingCache[(LeanDiagram[V, T], Map[Variable[V], V]), LeanDiagram[V, T]] = CacheBuilder.newBuilder.maximumSize(restrictCacheSize).build(new CacheLoader[(LeanDiagram[V, T], Map[Variable[V], V]), LeanDiagram[V, T]] {
+  private final val restrictCache: LoadingCache[(LeanDiagram[V, T], Map[Variable[V], V]), LeanDiagram[V, T]] = CacheBuilder.newBuilder.maximumSize(parameters.restrictCacheSize).build(new CacheLoader[(LeanDiagram[V, T], Map[Variable[V], V]), LeanDiagram[V, T]] {
     def load(key: (LeanDiagram[V, T], Map[Variable[V], V])): LeanDiagram[V, T] = {
       key match {
         case (leaf: Leaf[T], _) => leaf
@@ -42,7 +36,7 @@ private[leanimpl] class LeanContext[V, T](val variableOrder: Comparator[Variable
       }
     }
   })
-  private final val applyBinaryOperationCache: LoadingCache[(LeanDiagram[V, T], (T, T) => T, LeanDiagram[V, T]), LeanDiagram[V, T]] = CacheBuilder.newBuilder.maximumSize(binaryOpCacheSize).build(new CacheLoader[(LeanDiagram[V, T], (T, T) => T, LeanDiagram[V, T]), LeanDiagram[V, T]] {
+  private final val applyBinaryOperationCache: LoadingCache[(LeanDiagram[V, T], (T, T) => T, LeanDiagram[V, T]), LeanDiagram[V, T]] = CacheBuilder.newBuilder.maximumSize(parameters.binaryOpCacheSize).build(new CacheLoader[(LeanDiagram[V, T], (T, T) => T, LeanDiagram[V, T]), LeanDiagram[V, T]] {
     def load(key: (LeanDiagram[V, T], (T, T) => T, LeanDiagram[V, T])): LeanDiagram[V, T] = {
       key match {
         case (leftLeaf: Leaf[T], operation, rightLeaf: Leaf[T]) =>
@@ -51,9 +45,9 @@ private[leanimpl] class LeanContext[V, T](val variableOrder: Comparator[Variable
           getDiagramInternal(rightInner.variable, rightInner.children.map(x => applyBinaryOperationCache.getUnchecked((leftLeaf, operation, x))))
         case (leftInner: InnerNode[V, T], operation, rightLeaf: Leaf[T]) =>
           getDiagramInternal(leftInner.variable, leftInner.children.map(x => applyBinaryOperationCache.getUnchecked((x, operation, rightLeaf))))
-        case (leftInner: InnerNode[V, T], operation, rightInner: InnerNode[V, T]) if variableOrder.compare(leftInner.variable, rightInner.variable) < 0 =>
+        case (leftInner: InnerNode[V, T], operation, rightInner: InnerNode[V, T]) if parameters.variableOrder.compare(leftInner.variable, rightInner.variable) < 0 =>
           getDiagramInternal(leftInner.variable, leftInner.children.map(x => applyBinaryOperationCache.getUnchecked((x, operation, rightInner))))
-        case (leftInner: InnerNode[V, T], operation, rightInner: InnerNode[V, T]) if variableOrder.compare(leftInner.variable, rightInner.variable) > 0 =>
+        case (leftInner: InnerNode[V, T], operation, rightInner: InnerNode[V, T]) if parameters.variableOrder.compare(leftInner.variable, rightInner.variable) > 0 =>
           getDiagramInternal(rightInner.variable, rightInner.children.map(x => applyBinaryOperationCache.getUnchecked(leftInner, operation, x)))
         case (leftInner: InnerNode[V, T], operation, rightInner: InnerNode[V, T]) =>
           getDiagramInternal(rightInner.variable, leftInner.children.zip(rightInner.children).map({case (a, b) => applyBinaryOperationCache.getUnchecked(a, operation, b)}))
@@ -61,7 +55,7 @@ private[leanimpl] class LeanContext[V, T](val variableOrder: Comparator[Variable
     }
   })
 
-  private final val applyUnaryOperationCache: LoadingCache[(LeanDiagram[V, T], T => T), LeanDiagram[V, T]] = CacheBuilder.newBuilder.maximumSize(unaryOpCacheSize).build(new CacheLoader[(LeanDiagram[V, T], T => T), LeanDiagram[V, T]] {
+  private final val applyUnaryOperationCache: LoadingCache[(LeanDiagram[V, T], T => T), LeanDiagram[V, T]] = CacheBuilder.newBuilder.maximumSize(parameters.unaryOpCacheSize).build(new CacheLoader[(LeanDiagram[V, T], T => T), LeanDiagram[V, T]] {
     def load(key: (LeanDiagram[V, T], T => T)): LeanDiagram[V, T] = {
       key match {
         case (leaf: Leaf[T], operation) => getConstantDiagramInternal(operation(leaf.value))

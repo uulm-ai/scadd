@@ -1,6 +1,5 @@
 package de.uniulm.dds.base
 
-import java.util.Comparator
 import org.scalatest.FunSuite
 
 /**
@@ -11,17 +10,17 @@ import org.scalatest.FunSuite
  * Time: 09:44
  */
 trait AbstractTests extends FunSuite {
-  def createContext[V, T](variableOrder: Comparator[Variable[V]]): Context[V, T]
+  def createContext[V, T](): Context[V, T]
 
   test("Indicators sum to one") {
-    implicit val context: Context[String, Double] = createContext(lexicographicOrdering)
+    implicit val context: Context[String, Double] = createContext()
     val variable: Variable[String] = Variable("blubb", Set("a", "b", "c"))
     assertResult(DecisionDiagram(1d))(variable.domain.map(x => variable.indicator(x)).reduce(_ + _))
   }
 
   test("Conversion between Double contexts") {
-    val context1: Context[String, Double] = createContext(lexicographicOrdering)
-    val context2: Context[String, Double] = createContext(lexicographicOrdering)
+    val context1: Context[String, Double] = createContext()
+    val context2: Context[String, Double] = createContext()
     val fooIndicator: DecisionDiagram[String, Double] = Variable("foo", Set("a", "b", "c")).indicator("a")(context1, implicitly[Numeric[Double]])
     val barIndicator: DecisionDiagram[String, Double] = Variable("bar", Set("a", "b", "c")).indicator("a")(context1, implicitly[Numeric[Double]])
     val diagram: DecisionDiagram[String, Double] = fooIndicator * barIndicator
@@ -36,7 +35,7 @@ trait AbstractTests extends FunSuite {
   }
 
   test("Inversion, Difference, Negation") {
-    implicit val context: Context[String, Double] = createContext(lexicographicOrdering)
+    implicit val context: Context[String, Double] = createContext()
     val variable: Variable[String] = Variable("blubb", Set("a", "b", "c"))
     val onePlusIndicator: DecisionDiagram[String, Double] = DecisionDiagram(1d) + variable.indicator("a")
     assertResult(onePlusIndicator)(DecisionDiagram(1d) / (DecisionDiagram(1d) / onePlusIndicator))
@@ -45,22 +44,22 @@ trait AbstractTests extends FunSuite {
   }
 
   test("Sum out") {
-    implicit val context: Context[String, Double] = createContext(lexicographicOrdering)
+    implicit val context: Context[String, Double] = createContext()
     val variable: Variable[String] = Variable("blubb", Set("a", "b", "c"))
     val onePlusIndicator: DecisionDiagram[String, Double] = DecisionDiagram(1d) + variable.indicator("a")
     assertResult(DecisionDiagram(4d))(onePlusIndicator.opOut(variable, _ + _))
   }
 
   test("Indicators disjoin to true") {
-    implicit val context: Context[String, Boolean] = createContext(lexicographicOrdering)
+    implicit val context: Context[String, Boolean] = createContext()
     import ExtraBDDImplicits._
     val variable: Variable[String] = Variable("blubb", Set("a", "b", "c"))
     assertResult(DecisionDiagram(true))(variable.domain.map(x => variable.indicator(x)).reduce(_ || _))
   }
 
   test("Conversion between Boolean contexts") {
-    val context1: Context[String, Boolean] = createContext(lexicographicOrdering)
-    val context2: Context[String, Boolean] = createContext(lexicographicOrdering)
+    val context1: Context[String, Boolean] = createContext()
+    val context2: Context[String, Boolean] = createContext()
     import ExtraBDDImplicits._
     val variable1: Variable[String] = Variable("foo", Set("a", "b", "c"))
     val variable2: Variable[String] = Variable("bar", Set("a", "b", "c"))
@@ -70,7 +69,7 @@ trait AbstractTests extends FunSuite {
   }
 
   test("DeMorgan") {
-    implicit val context: Context[String, Boolean] = createContext(lexicographicOrdering)
+    implicit val context: Context[String, Boolean] = createContext()
     import ExtraBDDImplicits._
     val a: Variable[String] = Variable("a", Set("true", "false"))
     val b: Variable[String] = Variable("b", Set("true", "false"))
@@ -80,7 +79,7 @@ trait AbstractTests extends FunSuite {
   }
 
   test("Get value, i.e., apply()") {
-    implicit val context: Context[String, Int] = createContext(lexicographicOrdering)
+    implicit val context: Context[String, Int] = createContext()
     val variable: Variable[String] = Variable("a", Set("true", "false"))
     val simpleDiagram: DecisionDiagram[String, Int] = variable.indicator("true")
     assertResult(1)(simpleDiagram(Map(variable -> "true")))
@@ -88,14 +87,14 @@ trait AbstractTests extends FunSuite {
   }
 
   test("Interning of constant and simple diagrams") {
-    implicit val context: Context[String, Int] = createContext(lexicographicOrdering)
+    implicit val context: Context[String, Int] = createContext()
     assertResult(DecisionDiagram(1))(DecisionDiagram(1))
     val variable: Variable[String] = Variable("1", Set("true", "false"))
     assertResult(variable.indicator("false"))(variable.indicator("false"))
   }
 
   test("Creating simple diagrams works with suitable value maps only") {
-    implicit val context: Context[String, Int] = createContext(lexicographicOrdering)
+    implicit val context: Context[String, Int] = createContext()
     val variable: Variable[String] = Variable("1", Set("true", "false"))
     intercept[IllegalArgumentException] {
       DecisionDiagram(variable, Map("true" -> 0, "false" -> 1, "none" -> 2))
@@ -106,7 +105,7 @@ trait AbstractTests extends FunSuite {
   }
 
   test("Restrict a simple diagram") {
-    implicit val context: Context[String, Int] = createContext(lexicographicOrdering)
+    implicit val context: Context[String, Int] = createContext()
     val variable1: Variable[String] = Variable("1", Set("true", "false"))
     val simpleDiagram: DecisionDiagram[String, Int] = DecisionDiagram(variable1, Map("true" -> 0, "false" -> 1))
     assertResult(DecisionDiagram(0))(simpleDiagram.restrict(Map(variable1 -> "true")))
@@ -114,7 +113,7 @@ trait AbstractTests extends FunSuite {
   }
 
   test("Restrict a non-simple diagram") {
-    implicit val context: Context[String, Int] = createContext(lexicographicOrdering)
+    implicit val context: Context[String, Int] = createContext()
     val variable1: Variable[String] = Variable("1", Set("true", "false"))
     val variable2: Variable[String] = Variable("2", Set("true", "false"))
     val variable1FalseIndicator: DecisionDiagram[String, Int] = variable1.indicator("false")
@@ -129,7 +128,7 @@ trait AbstractTests extends FunSuite {
   }
 
   test("toString() and size()") {
-    implicit val context: Context[String, Int] = createContext(lexicographicOrdering)
+    implicit val context: Context[String, Int] = createContext()
     val variable1: Variable[String] = Variable("a", Set("true", "false"))
     val variable2: Variable[String] = Variable("b", Set("true", "false"))
     val variable1FalseIndicator: DecisionDiagram[String, Int] = variable1.indicator("false")
@@ -148,7 +147,7 @@ trait AbstractTests extends FunSuite {
   test("Compute occurring variables") {
     val variable1: Variable[String] = Variable("a", Set("true", "false"))
     val variable2: Variable[String] = Variable("b", Set("true", "false"))
-    implicit val context: Context[String, Int] = createContext(listbasedOrdering(List(variable1, variable2)))
+    implicit val context: Context[String, Int] = createContext()
     val variable1FalseIndicator: DecisionDiagram[String, Int] = variable1.indicator("false")
     val variable1TrueIndicator: DecisionDiagram[String, Int] = variable1.indicator("true")
     val variable2FalseIndicator: DecisionDiagram[String, Int] = variable2.indicator("false")
@@ -158,7 +157,7 @@ trait AbstractTests extends FunSuite {
   }
 
   test("Create numeric diagram from numeric function") {
-    implicit val context: Context[Boolean, Double] = createContext(lexicographicOrdering)
+    implicit val context: Context[Boolean, Double] = createContext()
 
     val mutexAsFunction: (Map[Variable[Boolean], Boolean]) => Double = assignment => if (assignment.keys.count(assignment) <= 1) 1 else 0
 
@@ -173,7 +172,7 @@ trait AbstractTests extends FunSuite {
   }
 
   test("Create Boolean diagram from Boolean function") {
-    implicit val context: Context[Boolean, Boolean] = createContext(lexicographicOrdering)
+    implicit val context: Context[Boolean, Boolean] = createContext()
     import ExtraBDDImplicits._
 
     val mutexAsFunction: (Map[Variable[Boolean], Boolean]) => Boolean = assignment => assignment.keys.count(assignment) <= 1

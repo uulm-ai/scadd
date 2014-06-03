@@ -28,3 +28,22 @@ trait Context[V, T] {
    */
   def getSimpleDiagram(variable: Variable[V], children: Map[V, T]): DecisionDiagram[V, T]
 }
+
+object Context {
+
+  trait ContextFactory[V, T, P[_, _]] {
+    def build(p: P[V, T]): Context[V, T]
+  }
+
+  /**
+   * Creates a new context
+   *
+   * @param params the parameters required to create the context
+   * @param factory the context factory
+   * @tparam V the type of the elements of variable domains
+   * @tparam T the type of leaf values of the diagrams
+   * @tparam P the type of parameters required to create the context
+   * @return
+   */
+  def apply[V, T, P[_, _]](params: P[V, T])(implicit factory: ContextFactory[V, T, P]): Context[V, T] = factory.build(params)
+}
