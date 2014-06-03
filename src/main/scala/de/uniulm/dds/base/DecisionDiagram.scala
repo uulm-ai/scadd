@@ -108,6 +108,19 @@ trait DecisionDiagram[V, T] extends (Map[Variable[V], V] => T) {
   def ||(other: DecisionDiagram[V, Boolean])(implicit evidence: DecisionDiagram[V, T] =:= DecisionDiagram[V, Boolean]): DecisionDiagram[V, Boolean] = evidence(this).applyBinaryOperation(_ || _, other)
 
   def unary_!(implicit evidence: DecisionDiagram[V, T] =:= DecisionDiagram[V, Boolean]): DecisionDiagram[V, Boolean] = evidence(this).applyUnaryOperation(!_)
+
+  /**
+   * Converts this diagram into the equivalent diagram of another context.
+   * @param targetContext the target context
+   * @return the converted diagram
+   */
+  def convertToContext(targetContext: Context[V, T])(implicit n: Numeric[T]): DecisionDiagram[V, T] = {
+    val leafTransformation: (T) => DecisionDiagram[V, T] = x => targetContext.getConstantDiagram(x)
+    val innerNodeTransformation: (Variable[V], Map[V, DecisionDiagram[V, T]]) => DecisionDiagram[V, T] =
+      (variable, map) => variable.domain.foldLeft(DecisionDiagram(n.fromInt(0))(targetContext))((sum, next) => sum + map(next) * variable.indicator(next)(targetContext, n))
+
+    transform(leafTransformation, innerNodeTransformation)
+  }
 }
 
 object DecisionDiagram {
@@ -131,4 +144,21 @@ object DecisionDiagram {
    * @return a diagram that maps `variable` to constant values.
    */
   def apply[V, T](variable: Variable[V], children: Map[V, T])(implicit context: Context[V, T]): DecisionDiagram[V, T] = context.getSimpleDiagram(variable, children)
+
+  /**
+   * Converts a given function into a decision diagram
+   * @param function the function to convert
+   * @param relevantVariables the variables that need to be assigned for evaluating this function
+   * @return a decision diagram representing this function
+   */
+  def apply[V, T](function: Map[Variable[V], V] => T, relevantVariables: Set[Variable[V]])(implicit context: Context[V, T], n: Numeric[T]): DecisionDiagram[V, T] = {
+    def build(partialAssignment: Map[Variable[V], V], remainingVariables: Set[Variable[V]]): DecisionDiagram[V, T] = {
+      if (remainingVariables.isEmpty) DecisionDiagram(function(partialAssignment))
+      else {
+        val nextVariable = remainingVariables.head
+        nextVariable.domain.foldLeft(DecisionDiagram(n.zero))((diagram, value) => diagram + nextVariable.indicator(value) * build(partialAssignment + (nextVariable -> value), remainingVariables.tail))
+      }
+    }
+    build(Map(), relevantVariables)
+  }
 }

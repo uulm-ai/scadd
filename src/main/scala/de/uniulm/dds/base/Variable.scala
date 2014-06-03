@@ -26,6 +26,17 @@ final class Variable[V] private(val name: String, val domain: Set[V]) extends Id
   def internableHashCode() = 31 * name.hashCode + domain.hashCode
 
   override def toString = name
+
+  /**
+   * Creates an indicator diagram that map `indicatedValue` to 1 and all other values to 0.
+   * @param indicatedValue the indicated value
+   * @param context the context to use for constructing the indicator diagram
+   * @param n the numeric
+   * @tparam T the number type
+   * @return the indicator diagram
+   */
+  def indicator[T](indicatedValue: V)(implicit context: Context[V, T], n: Numeric[T]): DecisionDiagram[V, T] =
+    DecisionDiagram(this, domain.map[(V, T), Map[V, T]](x => if (x == indicatedValue) x -> n.one else x -> n.zero)(collection.breakOut))
 }
 
 object Variable {

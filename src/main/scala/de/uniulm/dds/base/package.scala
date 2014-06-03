@@ -39,108 +39,39 @@ package object base {
   }
 
   /**
-   * Extra implicits for usage with ADDs
-   */
-  object ExtraADDImplicits {
-
-    implicit class RichVariable[V](variable: Variable[V]) {
-      /**
-       * Creates an indicator diagram that map `indicatedValue` to 1 and all other values to 0.
-       * @param indicatedValue the indicated value
-       * @param context the context to use for constructing the indicator diagram
-       * @param n the numeric
-       * @tparam T the number type
-       * @return the indicator diagram
-       */
-      def indicator[T](indicatedValue: V)(implicit context: Context[V, T], n: Numeric[T]): DecisionDiagram[V, T] =
-        DecisionDiagram(variable, variable.domain.map[(V, T), Map[V, T]](x => if (x == indicatedValue) x -> n.one else x -> n.zero)(collection.breakOut))
-    }
-
-    implicit class ADD[V, T](diagram: DecisionDiagram[V, T])(implicit n: Numeric[T]) {
-
-      /**
-       * Converts this diagram into the equivalent diagram of another context.
-       * @param targetContext the target context
-       * @return the converted diagram
-       */
-      def convertToContext(targetContext: Context[V, T]): DecisionDiagram[V, T] = {
-        val leafTransformation: (T) => DecisionDiagram[V, T] = x => targetContext.getConstantDiagram(x)
-        val innerNodeTransformation: (Variable[V], Map[V, DecisionDiagram[V, T]]) => DecisionDiagram[V, T] =
-          (variable, map) => variable.domain.foldLeft(DecisionDiagram(n.fromInt(0))(targetContext))((sum, next) => sum + map(next) * variable.indicator(next)(targetContext, n))
-
-        diagram.transform(leafTransformation, innerNodeTransformation)
-      }
-    }
-
-    implicit class RichFunction[V, T](function: Map[Variable[V], V] => T)(implicit context: Context[V, T], n: Numeric[T]) {
-
-      /**
-       * Converts this function into a decision diagram
-       * @param relevantVariables the variables that need to be assigned for evaluating this function
-       * @return a decision diagram representing this function
-       */
-      def toDecisionDiagram(relevantVariables: Set[Variable[V]]): DecisionDiagram[V, T] = {
-        def build(partialAssignment: Map[Variable[V], V], remainingVariables: Set[Variable[V]]): DecisionDiagram[V, T] = {
-          if (remainingVariables.isEmpty) DecisionDiagram(function(partialAssignment))
-          else {
-            val nextVariable = remainingVariables.head
-            nextVariable.domain.foldLeft(DecisionDiagram(n.zero))((diagram, value) => diagram + nextVariable.indicator(value) * build(partialAssignment + (nextVariable -> value), remainingVariables.tail))
-          }
-        }
-        build(Map(), relevantVariables)
-      }
-    }
-  }
-
-  /**
    * Extra implicits for usage with BDDs
    */
   object ExtraBDDImplicits {
 
-    implicit class RichVariable[V](variable: Variable[V]) {
-      /**
-       * Creates an indicator diagram that map `indicatedValue` to `true` and all other values to `false`.
-       * @param indicatedValue the indicated value
-       * @param context the context to use for constructing the indicator diagram
-       * @return the indicator diagram
-       */
-      def indicator(indicatedValue: V)(implicit context: Context[V, Boolean]): DecisionDiagram[V, Boolean] =
-        DecisionDiagram(variable, variable.domain.map[(V, Boolean), Map[V, Boolean]](x => x -> (x == indicatedValue))(collection.breakOut))
+    /**
+     * Implements a Numeric for Booleans via interpreting true as 1, false as 0, and calculating modulo 2
+     */
+    implicit object BooleanNumeric extends Integral[Boolean] {
+      override def plus(x: Boolean, y: Boolean): Boolean = x ^ y
+
+      override def toDouble(x: Boolean): Double = toInt(x)
+
+      override def toFloat(x: Boolean): Float = toInt(x)
+
+      override def toInt(x: Boolean): Int = if (x) 1 else 0
+
+      override def negate(x: Boolean): Boolean = x
+
+      override def fromInt(x: Int): Boolean = x % 2 != 0
+
+      override def toLong(x: Boolean): Long = toInt(x)
+
+      override def times(x: Boolean, y: Boolean): Boolean = x && y
+
+      override def minus(x: Boolean, y: Boolean): Boolean = x ^ y
+
+      override def compare(x: Boolean, y: Boolean): Int = Integer.compare(toInt(x), toInt(y))
+
+      override def quot(x: Boolean, y: Boolean): Boolean = fromInt(toInt(x) / toInt(y))
+
+      override def rem(x: Boolean, y: Boolean): Boolean = fromInt(toInt(x) % toInt(y))
     }
 
-    implicit class BDD[V](diagram: DecisionDiagram[V, Boolean]) {
-      /**
-       * Converts this diagram into the equivalent diagram of another context.
-       * @param targetContext the target context
-       * @return the converted diagram
-       */
-      def convertToContext(targetContext: Context[V, Boolean]): DecisionDiagram[V, Boolean] = {
-        val leafTransformation: (Boolean) => DecisionDiagram[V, Boolean] = targetContext.getConstantDiagram
-        val innerNodeTransformation: (Variable[V], Map[V, DecisionDiagram[V, Boolean]]) => DecisionDiagram[V, Boolean] =
-          (variable, map) => variable.domain.foldLeft(DecisionDiagram(false)(targetContext))((sum, next) => sum || map(next) && variable.indicator(next)(targetContext))
-
-        diagram.transform(leafTransformation, innerNodeTransformation)
-      }
-    }
-
-
-    implicit class RichFunction[V](function: Map[Variable[V], V] => Boolean)(implicit context: Context[V, Boolean]) {
-
-      /**
-       * Converts this function into a decision diagram
-       * @param relevantVariables the variables that need to be assigned for evaluating this function
-       * @return a decision diagram representing this function
-       */
-      def toDecisionDiagram(relevantVariables: Set[Variable[V]]): DecisionDiagram[V, Boolean] = {
-        def build(partialAssignment: Map[Variable[V], V], remainingVariables: Set[Variable[V]]): DecisionDiagram[V, Boolean] = {
-          if (remainingVariables.isEmpty) DecisionDiagram(function(partialAssignment))
-          else {
-            val nextVariable = remainingVariables.head
-            nextVariable.domain.foldLeft(DecisionDiagram(false))((diagram, value) => diagram || nextVariable.indicator(value) && build(partialAssignment + (nextVariable -> value), remainingVariables.tail))
-          }
-        }
-        build(Map(), relevantVariables)
-      }
-    }
   }
+
 }

@@ -15,7 +15,6 @@ trait AbstractTests extends FunSuite {
 
   test("Indicators sum to one") {
     implicit val context: Context[String, Double] = createContext(lexicographicOrdering)
-    import ExtraADDImplicits._
     val variable: Variable[String] = Variable("blubb", Set("a", "b", "c"))
     assertResult(DecisionDiagram(1d))(variable.domain.map(x => variable.indicator(x)).reduce(_ + _))
   }
@@ -23,7 +22,6 @@ trait AbstractTests extends FunSuite {
   test("Conversion between Double contexts") {
     val context1: Context[String, Double] = createContext(lexicographicOrdering)
     val context2: Context[String, Double] = createContext(lexicographicOrdering)
-    import ExtraADDImplicits._
     val fooIndicator: DecisionDiagram[String, Double] = Variable("foo", Set("a", "b", "c")).indicator("a")(context1, implicitly[Numeric[Double]])
     val barIndicator: DecisionDiagram[String, Double] = Variable("bar", Set("a", "b", "c")).indicator("a")(context1, implicitly[Numeric[Double]])
     val diagram: DecisionDiagram[String, Double] = fooIndicator * barIndicator
@@ -39,7 +37,6 @@ trait AbstractTests extends FunSuite {
 
   test("Inversion, Difference, Negation") {
     implicit val context: Context[String, Double] = createContext(lexicographicOrdering)
-    import ExtraADDImplicits._
     val variable: Variable[String] = Variable("blubb", Set("a", "b", "c"))
     val onePlusIndicator: DecisionDiagram[String, Double] = DecisionDiagram(1d) + variable.indicator("a")
     assertResult(onePlusIndicator)(DecisionDiagram(1d) / (DecisionDiagram(1d) / onePlusIndicator))
@@ -49,7 +46,6 @@ trait AbstractTests extends FunSuite {
 
   test("Sum out") {
     implicit val context: Context[String, Double] = createContext(lexicographicOrdering)
-    import ExtraADDImplicits._
     val variable: Variable[String] = Variable("blubb", Set("a", "b", "c"))
     val onePlusIndicator: DecisionDiagram[String, Double] = DecisionDiagram(1d) + variable.indicator("a")
     assertResult(DecisionDiagram(4d))(onePlusIndicator.opOut(variable, _ + _))
@@ -68,7 +64,7 @@ trait AbstractTests extends FunSuite {
     import ExtraBDDImplicits._
     val variable1: Variable[String] = Variable("foo", Set("a", "b", "c"))
     val variable2: Variable[String] = Variable("bar", Set("a", "b", "c"))
-    val diagram: DecisionDiagram[String, Boolean] = variable1.indicator("a")(context1) && variable2.indicator("a")(context1)
+    val diagram: DecisionDiagram[String, Boolean] = variable1.indicator("a")(context1, BooleanNumeric) && variable2.indicator("a")(context1, BooleanNumeric)
     assert(diagram !== diagram.convertToContext(context2))
     assertResult(diagram)(diagram.convertToContext(context2).convertToContext(context1))
   }
@@ -85,7 +81,6 @@ trait AbstractTests extends FunSuite {
 
   test("Get value, i.e., apply()") {
     implicit val context: Context[String, Int] = createContext(lexicographicOrdering)
-    import ExtraADDImplicits._
     val variable: Variable[String] = Variable("a", Set("true", "false"))
     val simpleDiagram: DecisionDiagram[String, Int] = variable.indicator("true")
     assertResult(1)(simpleDiagram(Map(variable -> "true")))
@@ -94,7 +89,6 @@ trait AbstractTests extends FunSuite {
 
   test("Interning of constant and simple diagrams") {
     implicit val context: Context[String, Int] = createContext(lexicographicOrdering)
-    import ExtraADDImplicits._
     assertResult(DecisionDiagram(1))(DecisionDiagram(1))
     val variable: Variable[String] = Variable("1", Set("true", "false"))
     assertResult(variable.indicator("false"))(variable.indicator("false"))
@@ -121,7 +115,6 @@ trait AbstractTests extends FunSuite {
 
   test("Restrict a non-simple diagram") {
     implicit val context: Context[String, Int] = createContext(lexicographicOrdering)
-    import ExtraADDImplicits._
     val variable1: Variable[String] = Variable("1", Set("true", "false"))
     val variable2: Variable[String] = Variable("2", Set("true", "false"))
     val variable1FalseIndicator: DecisionDiagram[String, Int] = variable1.indicator("false")
@@ -137,7 +130,6 @@ trait AbstractTests extends FunSuite {
 
   test("toString() and size()") {
     implicit val context: Context[String, Int] = createContext(lexicographicOrdering)
-    import ExtraADDImplicits._
     val variable1: Variable[String] = Variable("a", Set("true", "false"))
     val variable2: Variable[String] = Variable("b", Set("true", "false"))
     val variable1FalseIndicator: DecisionDiagram[String, Int] = variable1.indicator("false")
@@ -157,7 +149,6 @@ trait AbstractTests extends FunSuite {
     val variable1: Variable[String] = Variable("a", Set("true", "false"))
     val variable2: Variable[String] = Variable("b", Set("true", "false"))
     implicit val context: Context[String, Int] = createContext(listbasedOrdering(List(variable1, variable2)))
-    import ExtraADDImplicits._
     val variable1FalseIndicator: DecisionDiagram[String, Int] = variable1.indicator("false")
     val variable1TrueIndicator: DecisionDiagram[String, Int] = variable1.indicator("true")
     val variable2FalseIndicator: DecisionDiagram[String, Int] = variable2.indicator("false")
@@ -168,7 +159,6 @@ trait AbstractTests extends FunSuite {
 
   test("Create numeric diagram from numeric function") {
     implicit val context: Context[Boolean, Double] = createContext(lexicographicOrdering)
-    import ExtraADDImplicits._
 
     val mutexAsFunction: (Map[Variable[Boolean], Boolean]) => Double = assignment => if (assignment.keys.count(assignment) <= 1) 1 else 0
 
@@ -179,7 +169,7 @@ trait AbstractTests extends FunSuite {
     }
 
     val variables = Set(Variable("a"), Variable("b"), Variable("c"))
-    assertResult(mutexAsDiagram(variables))(mutexAsFunction.toDecisionDiagram(variables))
+    assertResult(mutexAsDiagram(variables))(DecisionDiagram(mutexAsFunction, variables))
   }
 
   test("Create Boolean diagram from Boolean function") {
@@ -195,6 +185,6 @@ trait AbstractTests extends FunSuite {
     }
 
     val variables = Set(Variable("a"), Variable("b"), Variable("c"))
-    assertResult(mutexAsDiagram(variables))(mutexAsFunction.toDecisionDiagram(variables))
+    assertResult(mutexAsDiagram(variables))(DecisionDiagram(mutexAsFunction, variables))
   }
 }
