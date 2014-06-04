@@ -14,10 +14,15 @@ The design ideas behind scadd are
 * uses immutable data structures for representing DDs,
 * is thread-safe,
 * supports multiple variable orderings simultaneously,
-* supports finite-domain variables, and
-* supports both ADDs and BDDs.
+* supports finite-domain variables,
+* supports both ADDs and BDDs, and
+* stictly separates API and diagram implementation.
 
 There exist many implementations for DDs, many of which are probably faster than scadd (see, again, [here](http://en.wikipedia.org/wiki/Binary_decision_diagram), for a list of other implementations).
+
+Scadd currently does not support automatic variable reordering. Implementing this remains future work. Manual variable reordering can be achieved by creating contexts with different variable orders and using `convertToContext`.
+
+Since API and diagram implementation are separated in scadd, it would not be too difficult to add an implementation of, e.g., Sentential Decision Diagrams (SDDs) without changing the existing API.
 
 Scadd usage example
 -------------------
