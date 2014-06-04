@@ -33,8 +33,8 @@ Here is an example for creating a variable, creating an ADD, and performing a fe
     implicit val context: Context[String, Double] = Context(Parameters[String, Double](lexicographicOrdering))
     val variable = Variable("w", Set("yes", "no", "maybe"))
     val constantOne = DecisionDiagram(1d)
-    val oneForA = DecisionDiagram(variable, Map("yes" -> 1d, "no" -> 0d, "maybe" -> 0d))
-    val summed: DecisionDiagram[String, Double] = constantOne + oneForA
+    val oneForYes = DecisionDiagram(variable, Map("yes" -> 1d, "no" -> 0d, "maybe" -> 0d))
+    val summed: DecisionDiagram[String, Double] = constantOne + oneForYes
     println(summed(Map(variable -> "yes"))) // prints 2.0
     println(summed eq DecisionDiagram(1d) / (DecisionDiagram(1d) / summed)) // prints true
     println(summed.restrict(Map(variable -> "yes")) eq DecisionDiagram(2d)) // prints true
