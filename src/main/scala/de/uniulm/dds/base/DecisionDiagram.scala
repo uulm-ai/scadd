@@ -146,7 +146,9 @@ object DecisionDiagram {
   def apply[V, T](variable: Variable[V], children: Map[V, T])(implicit context: Context[V, T]): DecisionDiagram[V, T] = context.getSimpleDiagram(variable, children)
 
   /**
-   * Converts a given function into a decision diagram
+   * Converts a given function into a decision diagram. Caution: this method enumerates all assignments to the given set
+   * of variables and therefore requires time exponential in `relevantVariables.size`.
+   *
    * @param function the function to convert
    * @param relevantVariables the variables that need to be assigned for evaluating this function
    * @return a decision diagram representing this function
