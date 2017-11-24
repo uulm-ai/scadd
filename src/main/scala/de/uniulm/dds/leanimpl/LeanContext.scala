@@ -1,26 +1,26 @@
 package de.uniulm.dds.leanimpl
 
-import com.google.common.cache.CacheBuilder
-import com.google.common.cache.CacheLoader
-import com.google.common.cache.LoadingCache
-import com.google.common.collect.IdentityInterners
-import com.google.common.collect.Interner
+import com.google.common.cache.{CacheBuilder, CacheLoader, LoadingCache}
 import de.uniulm.dds.base._
+import de.uniulm.identityinternable.IdentityInterner
+
+import scala.collection.mutable
 
 /**
- * The context implementation.
- * <p/>
- * User: Felix
- * Date: 23.04.13
- * Time: 15:21
- * @param parameters the configuration parameters
- * @tparam V The type of the elements of variable domains
- * @tparam T The type of leaf values of the diagrams
- */
+  * The context implementation.
+  * <p/>
+  * User: Felix
+  * Date: 23.04.13
+  * Time: 15:21
+  *
+  * @param parameters the configuration parameters
+  * @tparam V The type of the elements of variable domains
+  * @tparam T The type of leaf values of the diagrams
+  */
 private[leanimpl] class LeanContext[V, T](parameters: Parameters[V, T]) extends Context[V, T] {
 
-  private final val delegatingDiagramInterner: Interner[DelegatingDiagram[V, T]] = IdentityInterners.newWeakIdentityInterner()
-  private final val leanDiagramInterner: Interner[LeanDiagram[V, T]] = IdentityInterners.newWeakIdentityInterner()
+  private final val delegatingDiagramInterner: IdentityInterner[DelegatingDiagram[V, T]] = IdentityInterner.newWeakIdentityInterner()
+  private final val leanDiagramInterner: IdentityInterner[LeanDiagram[V, T]] = IdentityInterner.newWeakIdentityInterner()
   private final val variableValueIndices: LoadingCache[Variable[V], Map[V, Int]] = CacheBuilder.newBuilder.build(new CacheLoader[Variable[V], Map[V, Int]] {
     def load(key: Variable[V]): Map[V, Int] = key.domain.zipWithIndex[V, Map[V, Int]](collection.breakOut)
   })
@@ -50,7 +50,7 @@ private[leanimpl] class LeanContext[V, T](parameters: Parameters[V, T]) extends 
         case (leftInner: InnerNode[V, T], operation, rightInner: InnerNode[V, T]) if parameters.variableOrder.compare(leftInner.variable, rightInner.variable) > 0 =>
           getDiagramInternal(rightInner.variable, rightInner.children.map(x => applyBinaryOperationCache.getUnchecked(leftInner, operation, x)))
         case (leftInner: InnerNode[V, T], operation, rightInner: InnerNode[V, T]) =>
-          getDiagramInternal(rightInner.variable, leftInner.children.zip(rightInner.children).map({case (a, b) => applyBinaryOperationCache.getUnchecked(a, operation, b)}))
+          getDiagramInternal(rightInner.variable, leftInner.children.zip(rightInner.children).map({ case (a, b) => applyBinaryOperationCache.getUnchecked(a, operation, b) }))
       }
     }
   })
@@ -64,22 +64,22 @@ private[leanimpl] class LeanContext[V, T](parameters: Parameters[V, T]) extends 
     }
   })
 
-  def getConstantDiagram(value: T): DecisionDiagram[V, T] = delegatingDiagramInterner.intern(new DelegatingDiagram[V, T](getConstantDiagramInternal(value), this))
+  def getConstantDiagram(value: T): DecisionDiagram[V, T] = delegatingDiagramInterner.intern(DelegatingDiagram[V, T](getConstantDiagramInternal(value), this))
 
-  private def getConstantDiagramInternal(value: T): LeanDiagram[V, T] = leanDiagramInterner.intern(new Leaf[T](value))
+  private def getConstantDiagramInternal(value: T): LeanDiagram[V, T] = leanDiagramInterner.intern(Leaf[T](value))
 
   def getSimpleDiagram(variable: Variable[V], children: Map[V, T]): DecisionDiagram[V, T] = {
     require(children.keySet == variable.domain, children + " must exactly contain one mapping for each value of " + variable + ".")
     val indices: Map[V, Int] = variableValueIndices.getUnchecked(variable)
-    val array: Array[LeanDiagram[V, T]] = new Array[LeanDiagram[V, T]](children.size)
+    val array: mutable.WrappedArray[LeanDiagram[V, T]] = new Array[LeanDiagram[V, T]](children.size)
     for ((v, t) <- children) {
       array(indices(v)) = getConstantDiagramInternal(t)
     }
-    delegatingDiagramInterner.intern(new DelegatingDiagram[V, T](getDiagramInternal(variable, array), this))
+    delegatingDiagramInterner.intern(DelegatingDiagram[V, T](getDiagramInternal(variable, array), this))
   }
 
-  private def getDiagramInternal(variable: Variable[V], children: Array[LeanDiagram[V, T]]): LeanDiagram[V, T] = {
-    children.find(_ != children(0)).fold(children(0))(_ => leanDiagramInterner.intern(new InnerNode[V, T](variable, children))) // tail forall head?
+  private def getDiagramInternal(variable: Variable[V], children: mutable.WrappedArray[LeanDiagram[V, T]]): LeanDiagram[V, T] = {
+    children.find(_ != children(0)).fold(children(0))(_ => leanDiagramInterner.intern(InnerNode[V, T](variable, children))) // tail forall head?
   }
 
   // todo: intermediate result caching?
@@ -98,17 +98,17 @@ private[leanimpl] class LeanContext[V, T](parameters: Parameters[V, T]) extends 
   }
 
   private[leanimpl] def applyBinaryOperation(left: LeanDiagram[V, T], leafOperation: (T, T) => T, right: LeanDiagram[V, T]): DecisionDiagram[V, T] =
-    delegatingDiagramInterner.intern(new DelegatingDiagram[V, T](applyBinaryOperationCache.getUnchecked((left, leafOperation, right)), this))
+    delegatingDiagramInterner.intern(DelegatingDiagram[V, T](applyBinaryOperationCache.getUnchecked((left, leafOperation, right)), this))
 
   private[leanimpl] def applyUnaryOperation(diagram: LeanDiagram[V, T], leafOperation: T => T): DecisionDiagram[V, T] =
-    delegatingDiagramInterner.intern(new DelegatingDiagram[V, T](applyUnaryOperationCache.getUnchecked((diagram, leafOperation)), this))
+    delegatingDiagramInterner.intern(DelegatingDiagram[V, T](applyUnaryOperationCache.getUnchecked((diagram, leafOperation)), this))
 
   private[leanimpl] def restrict(diagram: LeanDiagram[V, T], assignment: Map[Variable[V], V]): DecisionDiagram[V, T] =
-    delegatingDiagramInterner.intern(new DelegatingDiagram[V, T](restrictCache.getUnchecked((diagram, assignment)), this))
+    delegatingDiagramInterner.intern(DelegatingDiagram[V, T](restrictCache.getUnchecked((diagram, assignment)), this))
 
   private[leanimpl] def innerNodeSet(diagram: LeanDiagram[V, T]): Set[LeanDiagram[V, T]] =
     diagram match {
-      case leaf: Leaf[T] => Set()
+      case _: Leaf[T] => Set()
       case inner: InnerNode[V, T] => Set(diagram) ++ inner.children.flatMap(innerNodeSet)
     }
 }

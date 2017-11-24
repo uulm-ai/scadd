@@ -1,25 +1,24 @@
 package de.uniulm.dds.defaultimpl
 
-import com.google.common.cache.Cache
-import com.google.common.cache.CacheBuilder
-import com.google.common.collect.IdentityInterners
-import com.google.common.collect.Interner
+import com.google.common.cache.{Cache, CacheBuilder}
 import de.uniulm.dds.base._
+import de.uniulm.identityinternable.IdentityInterner
 
 /**
- * The default context implementation. Ensures diagram uniqueness and supplies standard operations, but does not
- * implement caching of operation results.
- * <p/>
- * User: felix
- * Date: 26.03.13
- * Time: 14:59
- * @tparam V The type of the elements of variable domains
- * @tparam T The type of leaf values of the diagrams
- * @param parameters the configuration parameters
- */
+  * The default context implementation. Ensures diagram uniqueness and supplies standard operations, but does not
+  * implement caching of operation results.
+  * <p/>
+  * User: felix
+  * Date: 26.03.13
+  * Time: 14:59
+  *
+  * @tparam V The type of the elements of variable domains
+  * @tparam T The type of leaf values of the diagrams
+  * @param parameters the configuration parameters
+  */
 private[defaultimpl] class DefaultContext[V, T] private[defaultimpl](val parameters: Parameters[V, T]) extends Context[V, T] {
 
-  val interner: Interner[DefaultDiagram[V, T]] = IdentityInterners.newWeakIdentityInterner()
+  val interner: IdentityInterner[DefaultDiagram[V, T]] = IdentityInterner.newWeakIdentityInterner()
   val restrictCache: Cache[(DefaultDiagram[V, T], Map[Variable[V], V]), DefaultDiagram[V, T]] = CacheBuilder.newBuilder.maximumSize(parameters.restrictCacheSize).build()
   val applyBinaryOperationCache: Cache[(DefaultDiagram[V, T], (T, T) => T, DefaultDiagram[V, T]), DefaultDiagram[V, T]] = CacheBuilder.newBuilder.maximumSize(parameters.binaryOpCacheSize).build()
   val applyUnaryOperationCache: Cache[(DefaultDiagram[V, T], (T) => T), DefaultDiagram[V, T]] = CacheBuilder.newBuilder.maximumSize(parameters.unaryOpCacheSize).build()

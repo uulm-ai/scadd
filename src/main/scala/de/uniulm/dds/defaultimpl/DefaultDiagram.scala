@@ -1,17 +1,17 @@
 package de.uniulm.dds.defaultimpl
 
-import com.google.common.collect.IdentityInternable
-import de.uniulm.dds.base.DecisionDiagram
-import de.uniulm.dds.base.Variable
 import java.util.concurrent.Callable
 
+import de.uniulm.dds.base.{DecisionDiagram, Variable}
+import de.uniulm.identityinternable.IdentityInternable
+
 /**
- * Extension of the [[de.uniulm.dds.defaultimpl.DefaultDiagram]] interface for the default implementation.
- * <p/>
- * User: Felix
- * Date: 20.04.13
- * Time: 22:51
- */
+  * Extension of the [[de.uniulm.dds.defaultimpl.DefaultDiagram]] interface for the default implementation.
+  * <p/>
+  * User: Felix
+  * Date: 20.04.13
+  * Time: 22:51
+  */
 private[defaultimpl] sealed trait DefaultDiagram[V, T] extends DecisionDiagram[V, T] with IdentityInternable {
 
   def context: DefaultContext[V, T]
@@ -33,24 +33,15 @@ private[defaultimpl] sealed trait DefaultDiagram[V, T] extends DecisionDiagram[V
 }
 
 /**
- * An inner node of a decision diagram.
- * <p/>
- * User: felix
- * Date: 26.03.13
- * Time: 15:53
- */
-private[defaultimpl] final class InnerNode[V, T](val variable: Variable[V], val children: Map[V, DefaultDiagram[V, T]], val context: DefaultContext[V, T]) extends DefaultDiagram[V, T] {
+  * An inner node of a decision diagram.
+  * <p/>
+  * User: felix
+  * Date: 26.03.13
+  * Time: 15:53
+  */
+private[defaultimpl] final case class InnerNode[V, T](variable: Variable[V], children: Map[V, DefaultDiagram[V, T]], context: DefaultContext[V, T]) extends DefaultDiagram[V, T] {
 
   def apply(assignment: Map[Variable[V], V]): T = children(assignment(variable))(assignment)
-
-  def internableEquals(o: AnyRef): Boolean = {
-    o match {
-      case innerNode: InnerNode[V, T] => children == innerNode.children && context == innerNode.context && variable == innerNode.variable
-      case _ => false
-    }
-  }
-
-  def internableHashCode(): Int = 31 * (31 * variable.hashCode + children.hashCode) + context.hashCode
 
   // todo: intermediate result caching?
   def transform[K](leafTransformation: T => K, innerNodeTransformation: (Variable[V], Map[V, K]) => K): K =
@@ -60,7 +51,7 @@ private[defaultimpl] final class InnerNode[V, T](val variable: Variable[V], val 
     context.applyBinaryOperationCache.get((this, leafOperation, other), new Callable[DefaultDiagram[V, T]] {
       def call: DefaultDiagram[V, T] = {
         other match {
-          case leaf: Leaf[V, T] => context.getDiagramUnsafe(variable, children.mapValues(_.applyBinaryOperationInternal(leafOperation, other)))
+          case _: Leaf[V, T] => context.getDiagramUnsafe(variable, children.mapValues(_.applyBinaryOperationInternal(leafOperation, other)))
           case inner: InnerNode[V, T] =>
             val comparisonResult: Int = context.parameters.variableOrder.compare(variable, inner.variable)
             if (comparisonResult < 0) {
@@ -98,24 +89,15 @@ private[defaultimpl] final class InnerNode[V, T](val variable: Variable[V], val 
 }
 
 /**
- * A leaf node of a decision diagram.
- * <p/>
- * User: felix
- * Date: 26.03.13
- * Time: 15:10
- */
-private[defaultimpl] final class Leaf[V, T](val value: T, val context: DefaultContext[V, T]) extends DefaultDiagram[V, T] {
+  * A leaf node of a decision diagram.
+  * <p/>
+  * User: felix
+  * Date: 26.03.13
+  * Time: 15:10
+  */
+private[defaultimpl] final case class Leaf[V, T](value: T, context: DefaultContext[V, T]) extends DefaultDiagram[V, T] {
 
   def apply(assignment: Map[Variable[V], V]): T = value
-
-  def internableEquals(o: AnyRef): Boolean = {
-    o match {
-      case leaf: Leaf[V, T] => context == leaf.context && value == leaf.value
-      case _ => false
-    }
-  }
-
-  def internableHashCode(): Int = 31 * value.hashCode + context.hashCode
 
   def transform[K](leafTransformation: T => K, innerNodeTransformation: (Variable[V], Map[V, K]) => K): K = leafTransformation(value)
 
