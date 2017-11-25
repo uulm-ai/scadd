@@ -93,7 +93,9 @@ private[leanimpl] class LeanContext[V, T](parameters: Parameters[V, T]) extends 
   private[leanimpl] def getValue(diagram: LeanDiagram[V, T], assignment: Map[Variable[V], V]): T = {
     diagram match {
       case leaf: Leaf[T] => leaf.value
-      case inner: InnerNode[V, T] => getValue(inner.children(variableValueIndices.getUnchecked(inner.variable)(assignment(inner.variable))), assignment)
+      case inner: InnerNode[V, T] =>
+        require(assignment.contains(inner.variable), "assignment" + assignment + " contain variable " + inner.variable + ".")
+        getValue(inner.children(variableValueIndices.getUnchecked(inner.variable)(assignment(inner.variable))), assignment)
     }
   }
 

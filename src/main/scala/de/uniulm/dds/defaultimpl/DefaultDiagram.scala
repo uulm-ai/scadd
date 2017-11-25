@@ -41,7 +41,10 @@ private[defaultimpl] sealed trait DefaultDiagram[V, T] extends DecisionDiagram[V
   */
 private[defaultimpl] final case class InnerNode[V, T](variable: Variable[V], children: Map[V, DefaultDiagram[V, T]], context: DefaultContext[V, T]) extends DefaultDiagram[V, T] {
 
-  def apply(assignment: Map[Variable[V], V]): T = children(assignment(variable))(assignment)
+  def apply(assignment: Map[Variable[V], V]): T = {
+    require(assignment.contains(variable), "assignment" + assignment + " contain variable " + variable + ".")
+    children(assignment(variable))(assignment)
+  }
 
   // todo: intermediate result caching?
   def transform[K](leafTransformation: T => K, innerNodeTransformation: (Variable[V], Map[V, K]) => K): K =

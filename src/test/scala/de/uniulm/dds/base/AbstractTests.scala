@@ -84,6 +84,9 @@ trait AbstractTests extends FunSuite {
     val simpleDiagram: DecisionDiagram[String, Int] = variable.indicator("true")
     assertResult(1)(simpleDiagram(Map(variable -> "true")))
     assertResult(0)(simpleDiagram(Map(variable -> "false")))
+    intercept[IllegalArgumentException] {
+      simpleDiagram(Map())
+    }
   }
 
   test("Interning of constant and simple diagrams") {
