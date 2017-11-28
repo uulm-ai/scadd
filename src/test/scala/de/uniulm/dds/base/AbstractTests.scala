@@ -141,7 +141,7 @@ trait AbstractTests extends FunSuite {
     val falseBranch: DecisionDiagram[String, Int] = variable1FalseIndicator * variable2TrueIndicator
     val trueBranch: DecisionDiagram[String, Int] = variable1TrueIndicator * variable2FalseIndicator
     val result: DecisionDiagram[String, Int] = trueBranch + falseBranch
-    assertResult("(a\n" + "\t(true (b\n" + "\t\t(true (0))\n" + "\t\t(false (1))))\n" + "\t(false (b\n" + "\t\t(true (1))\n" + "\t\t(false (0)))))")(result.toString())
+    assertResult("(a\n\t(true (b\n\t\t(true (0))\n\t\t(false (1))))\n\t(false (b\n\t\t(true (1))\n\t\t(false (0)))))")(result.toString())
     assertResult(4)((result * Variable("c", Set("true", "false")).indicator("true")).size)
     assertResult(3)(result.size)
     assertResult(0)(DecisionDiagram(5).size)
