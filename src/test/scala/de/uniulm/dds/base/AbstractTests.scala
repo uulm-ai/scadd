@@ -101,7 +101,9 @@ trait AbstractTests extends FunSuite {
     implicit val context: Context[String, Int] = createContext()
     assertResult(DecisionDiagram(1))(DecisionDiagram(1))
     val variable: Variable[String] = Variable("1", Set("true", "false"))
-    assertResult(variable.indicator("false"))(variable.indicator("false"))
+    val value = variable.indicator("false")
+    System.gc()
+    assertResult(value)(variable.indicator("false"))
   }
 
   test("Creating simple diagrams works with suitable value maps only") {

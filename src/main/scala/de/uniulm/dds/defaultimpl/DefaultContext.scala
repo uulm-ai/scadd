@@ -27,7 +27,8 @@ private[defaultimpl] class DefaultContext[V, T] private[defaultimpl](val paramet
 
   def getSimpleDiagram(variable: Variable[V], children: Map[V, T]): DecisionDiagram[V, T] = {
     require(children.keySet == variable.domain, children + " must exactly contain one mapping for each value of " + variable + ".")
-    getDiagramUnsafe(variable, children.mapValues(getConstantDiagram))
+    // mapValues is apparently not a good idea here, because it only returns a view
+    getDiagramUnsafe(variable, for ((k, v) <- children) yield k -> getConstantDiagram(v))
   }
 
   private[defaultimpl] def getDiagramUnsafe(variable: Variable[V], children: Map[V, DefaultDiagram[V, T]]): DefaultDiagram[V, T] = {
