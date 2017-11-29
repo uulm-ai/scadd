@@ -35,7 +35,14 @@ class ADDParserTests extends FunSuite with Matchers {
     "(a\n\t(true (b\n\t\t(true (0))\n\t\t(false (1))))\n\t(false (b\n\t\t(true (1))\n\t\t(false (0)))))" -> aXorB
   )
 
-  val allDiagrams: Map[String, DecisionDiagram[String, Double]] = constantDiagrams ++ complexDiagrams
+  val allValidDiagrams: Map[String, DecisionDiagram[String, Double]] = constantDiagrams ++ complexDiagrams
+
+  val invalidDiagrams: Set[String] = Set(
+    // value 'true' is used twice
+    "(a\n\t(true (0))\n\t(true (1)))",
+    // variable 'b' is once used with 2 and once with 3 values in its domain
+    "(a\n\t(true (b\n\t\t(true (0))\n\t\t(false (1))))\n\t(false (b\n\t\t(true (1))\n\t\t(false (0))\n\t\t(nope (0)))))"
+  )
 
   val parser = new ADDParser()
 
@@ -56,10 +63,17 @@ class ADDParserTests extends FunSuite with Matchers {
   }
 
   test("The Strings returned by toString can be parsed back") {
-    allDiagrams.values.toSet.foreach((diagram: DecisionDiagram[String, Double]) => {
+    allValidDiagrams.values.toSet.foreach((diagram: DecisionDiagram[String, Double]) => {
       val parseResult = parser.parse(parser.diagram, diagram.toString())
       parseResult should matchPattern { case parser.Success(_, _) => }
       assertResult(diagram)(parseResult.get)
+    })
+  }
+
+  test("Attempting to parse an invalid diagrams fails") {
+    invalidDiagrams.foreach(string => {
+      val parseResult = parser.parse(parser.diagram, string)
+      parseResult should matchPattern { case parser.Error(_, _) => }
     })
   }
 }

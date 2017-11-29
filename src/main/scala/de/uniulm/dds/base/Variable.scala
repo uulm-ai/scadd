@@ -1,7 +1,5 @@
 package de.uniulm.dds.base
 
-import de.uniulm.identityinternable.{IdentityInternable, IdentityInterner}
-
 
 /**
   * Represents a variable in a decision diagram.
@@ -12,7 +10,7 @@ import de.uniulm.identityinternable.{IdentityInternable, IdentityInterner}
   *
   * @tparam V the type of the elements of a variables domain.
   */
-final case class Variable[V] private(name: String, domain: Set[V]) extends IdentityInternable {
+final class Variable[V] private[base](val name: String, val domain: Set[V]) {
   require(domain.size >= 2, "Domain size must be two or more.")
 
   override def toString: String = name
@@ -31,22 +29,13 @@ final case class Variable[V] private(name: String, domain: Set[V]) extends Ident
 }
 
 object Variable {
-  private final val interner: IdentityInterner[Variable[_]] = IdentityInterner.newWeakIdentityInterner()
-
   /**
     * Constructs a new variable.
     *
-    * @param name   The name of the variable
-    * @param domain The domain of the variable, i.e., the values it can take. Must be a finite set of cardinality of two or more.
+    * @param name    The name of the variable
+    * @param domain  The domain of the variable, i.e., the values it can take. Must be a finite set of cardinality of two or more.
+    * @param context the (possibly implicitly given) context that creates the actual variable
     * @return the new variable
     */
-  def apply[V](name: String, domain: Set[V]): Variable[V] = interner.asInstanceOf[IdentityInterner[Variable[V]]].intern(new Variable[V](name, domain))
-
-  /**
-    * Constructs a new boolean variable.
-    *
-    * @param name The name of the variable
-    * @return the new variable
-    */
-  def apply(name: String): Variable[Boolean] = Variable(name, Set(true, false))
+  def apply[V, T](name: String, domain: Set[V])(implicit context: Context[V, T]): Variable[V] = context.getVariable(name, domain)
 }

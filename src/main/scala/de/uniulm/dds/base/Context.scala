@@ -1,5 +1,9 @@
 package de.uniulm.dds.base
 
+import java.util.concurrent.ConcurrentMap
+
+import com.google.common.collect.MapMaker
+
 /**
   * An interface for decision diagram contexts. The context
   * contains information on variable ordering, takes care of ensuring diagram uniqueness, and so on.
@@ -12,6 +16,8 @@ package de.uniulm.dds.base
   * @tparam T The type of leaf values of the diagrams
   */
 trait Context[V, T] {
+  private final val variableNameMap: ConcurrentMap[String, Variable[V]] = new MapMaker().weakValues().makeMap()
+
   /**
     * Creates a diagram representing the constant mapping to `value`.
     *
@@ -28,6 +34,19 @@ trait Context[V, T] {
     * @return a diagram that maps `variable` to constant values.
     */
   def getSimpleDiagram(variable: Variable[V], children: Map[V, T]): DecisionDiagram[V, T]
+
+  /**
+    * Creates a variable
+    *
+    * @param name   The name of the variable
+    * @param domain The domain of the variable, i.e., the values it can take. Must be a finite set of cardinality of two or more.
+    * @return the new variable
+    */
+  def getVariable(name: String, domain: Set[V]): Variable[V] = {
+    val variable = variableNameMap.computeIfAbsent(name, _ => new Variable[V](name, domain))
+    require(domain == variable.domain, "Attempting to create variable \"" + name + "\" with domain " + domain + " when a variable with the same name but domain " + variable.domain + " already exists in the context.")
+    variable
+  }
 }
 
 object Context {

@@ -12,6 +12,14 @@ import org.scalatest.FunSuite
 trait AbstractTests extends FunSuite {
   def createContext[V, T](): Context[V, T]
 
+  test("No two variables with the same name but different domain can exist in a context") {
+    implicit val context: Context[String, Double] = createContext()
+    val variable1: Variable[String] = Variable("blubb", Set("a", "b", "c"))
+    intercept[IllegalArgumentException] {
+      val variable2: Variable[String] = Variable("blubb", Set("a", "b"))
+    }
+  }
+
   test("Indicators sum to one") {
     implicit val context: Context[String, Double] = createContext()
     val variable: Variable[String] = Variable("blubb", Set("a", "b", "c"))
@@ -19,11 +27,11 @@ trait AbstractTests extends FunSuite {
   }
 
   test("Conversion between Double contexts") {
-    val context1: Context[String, Double] = createContext()
-    val context2: Context[String, Double] = createContext()
-    val fooIndicator: DecisionDiagram[String, Double] = Variable("foo", Set("a", "b", "c")).indicator("a")(context1, implicitly[Numeric[Double]])
-    val barIndicator: DecisionDiagram[String, Double] = Variable("bar", Set("a", "b", "c")).indicator("a")(context1, implicitly[Numeric[Double]])
+    implicit val context1: Context[String, Double] = createContext()
+    val fooIndicator: DecisionDiagram[String, Double] = Variable("foo", Set("a", "b", "c")).indicator("a")
+    val barIndicator: DecisionDiagram[String, Double] = Variable("bar", Set("a", "b", "c")).indicator("a")
     val diagram: DecisionDiagram[String, Double] = fooIndicator * barIndicator
+    val context2: Context[String, Double] = createContext()
     val converted: DecisionDiagram[String, Double] = diagram.convertToContext(context2)
     intercept[IllegalArgumentException] {
       diagram + converted
@@ -58,12 +66,12 @@ trait AbstractTests extends FunSuite {
   }
 
   test("Conversion between Boolean contexts") {
-    val context1: Context[String, Boolean] = createContext()
-    val context2: Context[String, Boolean] = createContext()
+    implicit val context1: Context[String, Boolean] = createContext()
     import ExtraBDDImplicits._
     val variable1: Variable[String] = Variable("foo", Set("a", "b", "c"))
     val variable2: Variable[String] = Variable("bar", Set("a", "b", "c"))
     val diagram: DecisionDiagram[String, Boolean] = variable1.indicator("a")(context1, BooleanNumeric) && variable2.indicator("a")(context1, BooleanNumeric)
+    val context2: Context[String, Boolean] = createContext()
     assert(diagram !== diagram.convertToContext(context2))
     assertResult(diagram)(diagram.convertToContext(context2).convertToContext(context1))
   }
@@ -148,9 +156,9 @@ trait AbstractTests extends FunSuite {
   }
 
   test("Compute occurring variables") {
+    implicit val context: Context[String, Int] = createContext()
     val variable1: Variable[String] = Variable("a", Set("true", "false"))
     val variable2: Variable[String] = Variable("b", Set("true", "false"))
-    implicit val context: Context[String, Int] = createContext()
     val variable1FalseIndicator: DecisionDiagram[String, Int] = variable1.indicator("false")
     val variable1TrueIndicator: DecisionDiagram[String, Int] = variable1.indicator("true")
     val variable2FalseIndicator: DecisionDiagram[String, Int] = variable2.indicator("false")
@@ -170,7 +178,7 @@ trait AbstractTests extends FunSuite {
       oneTrueBefores.foldLeft(noneTrueBefore)(_ + _)
     }
 
-    val variables = Set(Variable("a"), Variable("b"), Variable("c"))
+    val variables = Set(Variable("a", Set(false, true)), Variable("b", Set(false, true)), Variable("c", Set(false, true)))
     assertResult(mutexAsDiagram(variables))(DecisionDiagram(mutexAsFunction, variables))
   }
 
@@ -186,7 +194,7 @@ trait AbstractTests extends FunSuite {
       oneTrueBefores.foldLeft(noneTrueBefore)(_ || _)
     }
 
-    val variables = Set(Variable("a"), Variable("b"), Variable("c"))
+    val variables = Set(Variable("a", Set(false, true)), Variable("b", Set(false, true)), Variable("c", Set(false, true)))
     assertResult(mutexAsDiagram(variables))(DecisionDiagram(mutexAsFunction, variables))
   }
 }

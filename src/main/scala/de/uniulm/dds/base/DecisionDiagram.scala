@@ -122,7 +122,10 @@ trait DecisionDiagram[V, T] extends (Map[Variable[V], V] => T) {
   def convertToContext(targetContext: Context[V, T])(implicit n: Numeric[T]): DecisionDiagram[V, T] = {
     val leafTransformation: (T) => DecisionDiagram[V, T] = x => targetContext.getConstantDiagram(x)
     val innerNodeTransformation: (Variable[V], Map[V, DecisionDiagram[V, T]]) => DecisionDiagram[V, T] =
-      (variable, map) => variable.domain.foldLeft(DecisionDiagram(n.fromInt(0))(targetContext))((sum, next) => sum + map(next) * variable.indicator(next)(targetContext, n))
+      (variable, map) => {
+        val newVariable = targetContext.getVariable(variable.name, variable.domain)
+        newVariable.domain.foldLeft(DecisionDiagram(n.fromInt(0))(targetContext))((sum, next) => sum + map(next) * newVariable.indicator(next)(targetContext, n))
+      }
 
     transform(leafTransformation, innerNodeTransformation)
   }
