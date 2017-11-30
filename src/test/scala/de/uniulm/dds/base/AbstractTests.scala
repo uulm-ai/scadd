@@ -10,7 +10,7 @@ import org.scalatest.FunSuite
  * Time: 09:44
  */
 trait AbstractTests extends FunSuite {
-  def createContext[V, T](): Context[V, T]
+  def createContext[V, T](ordering: Ordering[Variable[V]] = lexicographicOrdering[V]): Context[V, T]
 
   test("No two variables with the same name but different domain can exist in a context") {
     implicit val context: Context[String, Double] = createContext()
@@ -31,7 +31,7 @@ trait AbstractTests extends FunSuite {
     val fooIndicator: DecisionDiagram[String, Double] = Variable("foo", Set("a", "b", "c")).indicator("a")
     val barIndicator: DecisionDiagram[String, Double] = Variable("bar", Set("a", "b", "c")).indicator("a")
     val diagram: DecisionDiagram[String, Double] = fooIndicator * barIndicator
-    val context2: Context[String, Double] = createContext()
+    val context2: Context[String, Double] = createContext(lexicographicOrdering.reverse)
     val converted: DecisionDiagram[String, Double] = diagram.convertToContext(context2)
     intercept[IllegalArgumentException] {
       diagram + converted

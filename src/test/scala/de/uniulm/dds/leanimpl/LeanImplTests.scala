@@ -10,5 +10,5 @@ import de.uniulm.dds.base._
  * Time: 17:12
  */
 class LeanImplTests extends AbstractTests {
-  def createContext[V, T](): Context[V, T] = Context(Parameters[V, T](lexicographicOrdering))
+  def createContext[V, T](ordering: Ordering[Variable[V]] = lexicographicOrdering[V]): Context[V, T] = Context(Parameters[V, T](ordering))
 }
