@@ -7,8 +7,7 @@ import scala.util.parsing.combinator.JavaTokenParsers
 
 class ADDParser(implicit context: Context[String, Double]) extends JavaTokenParsers {
   // todo: allow parsing other numerics
-  // todo: make sure variables are used consistently, i.e., always with the same set of values
-  def leaf: Parser[DecisionDiagram[String, Double]] = "(" ~ floatingPointNumber ~ ")" ^^ { case _ ~ num ~ _ => DecisionDiagram[String, Double](num.toDouble) }
+  def leaf: Parser[DecisionDiagram[String, Double]] = "(" ~> floatingPointNumber <~ ")" ^^ (num => DecisionDiagram[String, Double](num.toDouble))
 
   def valueChildTuple: Parser[(String, DecisionDiagram[String, Double])] = ("(" ~> ident <~ opt(whiteSpace)) ~ (diagram <~ ")" <~ opt(whiteSpace)) ^^ {
     case valueName ~ childDiagram => (valueName, childDiagram)
