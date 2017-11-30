@@ -20,7 +20,7 @@ final class Variable[V] private[base](val name: String, val domain: Set[V]) {
     *
     * @param indicatedValue the indicated value
     * @param context        the context to use for constructing the indicator diagram
-    * @param n              the numeric
+    * @param n              the numeric that defines what 1 and 0 are.
     * @tparam T the number type
     * @return the indicator diagram
     */

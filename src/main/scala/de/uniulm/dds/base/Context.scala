@@ -6,7 +6,8 @@ import com.google.common.collect.MapMaker
 
 /**
   * An interface for decision diagram contexts. The context
-  * contains information on variable ordering, takes care of ensuring diagram uniqueness, and so on.
+  * contains information on variable ordering, takes care of ensuring diagram uniqueness, and ensures that
+  * variable names are unique.
   *
   * User: Felix
   * Date: 20.05.13
@@ -36,7 +37,7 @@ trait Context[V, T] {
   def getSimpleDiagram(variable: Variable[V], children: Map[V, T]): DecisionDiagram[V, T]
 
   /**
-    * Creates a variable
+    * Creates a variable.
     *
     * @param name   The name of the variable
     * @param domain The domain of the variable, i.e., the values it can take. Must be a finite set of cardinality of two or more.
@@ -63,7 +64,7 @@ object Context {
     * @tparam V the type of the elements of variable domains
     * @tparam T the type of leaf values of the diagrams
     * @tparam P the type of parameters required to create the context
-    * @return
+    * @return the new context
     */
   def apply[V, T, P[_, _]](params: P[V, T])(implicit factory: ContextFactory[V, T, P]): Context[V, T] = factory.build(params)
 }

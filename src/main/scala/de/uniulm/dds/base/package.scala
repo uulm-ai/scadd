@@ -2,8 +2,8 @@ package de.uniulm.dds
 
 
 /**
-  * Holds implicit classes for providing additional methods on number-valued decision diagrams (i.e., ADDs) and
-  * boolean-valued decision diagrams (i.e., BDDs).
+  * Holds implicit classes for providing additional methods on boolean-valued decision diagrams (i.e., BDDs) and
+  * convenience methods for creating variable ordering.
   *
   * User: Felix
   * Date: 27.05.13

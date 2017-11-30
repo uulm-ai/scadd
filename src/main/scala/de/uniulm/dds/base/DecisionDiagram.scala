@@ -18,12 +18,12 @@ trait DecisionDiagram[V, T] extends (Map[Variable[V], V] => T) {
   def context: Context[V, T]
 
   /**
-    * Transforms this decision diagram by recursively applying the <code>operation</code> to leaves and inner nodes.
+    * Transforms this decision diagram by recursively applying the operations to leaves and inner nodes.
     * I.e., this method does a post-order depth-first traversal of the decision graph.
     *
     * @param leafTransformation      the operation to apply to leaf values
     * @param innerNodeTransformation the operation to apply to inner nodes, given the variable of the inner node and
-    *                                the result of transforming its children
+    *                                the result of transforming their children
     * @tparam K the result type of the transformation
     * @return the transformation result
     */
@@ -32,7 +32,7 @@ trait DecisionDiagram[V, T] extends (Map[Variable[V], V] => T) {
   /**
     * Applies a binary operation to this diagram and a given other diagram. Semantically, it is a point-wise
     * application of the given operation to all assignments, i.e.,
-    * `result.getValue(x) == operation.apply(this.getValue(x), other.getValue(x))` for all assignments `x`.
+    * `result(x) == operation(this(x), other(x))` for all assignments `x`.
     *
     * @param other         the second argument of the operation
     * @param leafOperation the operation to apply
@@ -42,7 +42,7 @@ trait DecisionDiagram[V, T] extends (Map[Variable[V], V] => T) {
 
   /**
     * Applies a unary operation to this diagram. Semantically, it is a point-wise application of the given operation
-    * to all assignments, i.e., `result.getValue(x) == operation.apply(this.getValue(x))` for all assignments `x`.
+    * to all assignments, i.e., `result(x) == operation(this(x))` for all assignments `x`.
     *
     * @param leafOperation the operation to apply
     * @return the result of applying the operation
@@ -137,6 +137,8 @@ object DecisionDiagram {
     *
     * @param value   the constant value
     * @param context the (possibly implicitly given) context that creates the actual diagram
+    * @tparam V The type of the elements of variable domains
+    * @tparam T The type of leaf values of the diagrams
     * @return a diagram representing the constant mapping to `value`.
     */
   def apply[V, T](value: T)(implicit context: Context[V, T]): DecisionDiagram[V, T] = context.getConstantDiagram(value)
@@ -159,6 +161,8 @@ object DecisionDiagram {
     *
     * @param function          the function to convert
     * @param relevantVariables the variables that need to be assigned for evaluating this function
+    * @tparam V The type of the elements of variable domains
+    * @tparam T The type of leaf values of the diagrams
     * @return a decision diagram representing this function
     */
   def apply[V, T](function: Map[Variable[V], V] => T, relevantVariables: Set[Variable[V]])(implicit context: Context[V, T], n: Numeric[T]): DecisionDiagram[V, T] = {
