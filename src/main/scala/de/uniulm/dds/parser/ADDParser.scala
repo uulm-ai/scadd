@@ -18,9 +18,9 @@ class ADDParser(implicit context: Context[String, Double]) extends JavaTokenPars
       (firstTuple +: (for ((valueName, childDiagram) <- restList) yield valueName -> childDiagram)).toMap
   }
 
-  def inner: Parser[DecisionDiagram[String, Double]] = "(" ~> (ident <~ opt(whiteSpace)) ~! valueMap <~ ")" ^? {
-    case variableName ~ valueMap if Try(Variable(variableName, valueMap.keySet)).isSuccess =>
-      val variable = Variable(variableName, valueMap.keySet)
+  def inner: Parser[DecisionDiagram[String, Double]] = "(" ~> (ident ~ opt("'") <~ opt(whiteSpace)) ~! valueMap <~ ")" ^? {
+    case variableName ~ prime ~ valueMap if Try(Variable(variableName + prime.getOrElse(""), valueMap.keySet)).isSuccess =>
+      val variable = Variable(variableName + prime.getOrElse(""), valueMap.keySet)
       valueMap.keySet.foldLeft(DecisionDiagram(0d))({ case (current, next) => current + valueMap(next) * variable.indicator(next) })
   }
 

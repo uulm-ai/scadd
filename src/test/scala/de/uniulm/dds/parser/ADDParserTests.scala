@@ -32,6 +32,7 @@ class ADDParserTests extends FunSuite with Matchers {
 
   val complexDiagrams = Map(
     "(a\n\t(true (1))\n\t(false (0)))" -> Variable("a", Set("false", "true")).indicator("true"),
+    "(a'\n\t(true (1))\n\t(false (0)))" -> Variable("a'", Set("false", "true")).indicator("true"),
     "(a\n\t(true (b\n\t\t(true (0))\n\t\t(false (1))))\n\t(false (b\n\t\t(true (1))\n\t\t(false (0)))))" -> aXorB
   )
 
